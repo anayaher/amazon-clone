@@ -1,4 +1,5 @@
 import 'package:amazon_clone/constants/global_variables.dart';
+import 'package:amazon_clone/features/auth/services/auth_services.dart';
 import 'package:amazon_clone/features/auth/widgets/auth_input.dart';
 import 'package:amazon_clone/features/auth/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   Auth _auth = Auth.signUp;
   final _signUpFormKey = GlobalKey<FormState>();
+  final AuthService authService = AuthService();
   final _signInFormKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
@@ -27,11 +29,25 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     _emailController.dispose();
     _passController.dispose();
     _nameController.dispose();
+  }
+
+  void signUp() {
+    authService.signUp(
+        name: _nameController.text,
+        context: context,
+        email: _emailController.text,
+        password: _passController.text);
+  }
+
+  void signIn() {
+    authService.singIn(
+        context: context,
+        email: _emailController.text,
+        password: _passController.text);
   }
 
   @override
@@ -97,8 +113,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           height: 10,
                         ),
                         CustomButton(
-                          onTap: () {},
-                          text: "Sign In",
+                          onTap: () {
+                            if (_signUpFormKey.currentState!.validate()) {
+                              signUp();
+                            }
+                          },
+                          text: "Sign Up",
                           color: GlobalVariables.secondaryColor,
                         )
                       ],
@@ -110,7 +130,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ? Colors.white
                     : GlobalVariables.greyBackgroundCOlor,
                 title: const Text(
-                  "Sign-In",
+                  "Sign In",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 leading: Radio(
@@ -129,7 +149,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   padding: const EdgeInsets.all(8),
                   color: GlobalVariables.backgroundColor,
                   child: Form(
-                    key: _signUpFormKey,
+                    key: _signInFormKey,
                     child: Column(
                       children: [
                         AuthInput(
@@ -147,7 +167,13 @@ class _AuthScreenState extends State<AuthScreen> {
                           height: 10,
                         ),
                         CustomButton(
-                          onTap: () {},
+                          onTap: () {
+                            {
+                              if (_signInFormKey.currentState!.validate()) {
+                                signIn();
+                              }
+                            }
+                          },
                           text: _auth == Auth.signIn ? "Sign-In" : "Sign Up",
                           color: GlobalVariables.secondaryColor,
                         )
