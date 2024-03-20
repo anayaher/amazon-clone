@@ -56,7 +56,7 @@ class AuthService {
   }) async {
     try {
       http.Response res = await http.post(
-        Uri.parse('$uri/api/signIn'),
+        Uri.parse('$uri/api/signin'),
         body: jsonEncode(
           {
             'email': email,
@@ -74,10 +74,12 @@ class AuthService {
         context: context,
         onSuccess: () async {
           SharedPreferences preferences = await SharedPreferences.getInstance();
+          print(jsonDecode(res.body)['token']);
           await preferences.setString(
               'x-auth-token', jsonDecode(res.body)['token']);
           // ignore: use_build_context_synchronously
-          Provider.of<UserProvider>(context, listen: false).setUser((res.body));
+          var provider = Provider.of<UserProvider>(context, listen: false);
+          provider.setUser(res.body);
           // ignore: use_build_context_synchronously
           Navigator.pushNamedAndRemoveUntil(
             context,
@@ -86,6 +88,41 @@ class AuthService {
           );
         },
       );
+    } catch (e) {}
+  }
+
+  void getUserData(BuildContext context) async {
+    try {
+      SharedPreferences preferences = await SharedPreferences.getInstance();
+
+      String? token = preferences.getString('x-auth-token');
+      if (token == null) {
+        preferences.setString('x-auth-token', '');
+      }
+
+      var tokenRes = await http.post(
+        Uri.parse('$uri/tokenIsValid'),
+        headers: <String, String>{
+          'Content-type': 'application/json; charset=UTF-8',
+          'x-auth-token': token!,
+        },
+      );
+
+      var response = jsonDecode(tokenRes.body);
+
+      if (response == true) {
+        http.Response userRes = await http.get(
+          Uri.parse('$uri/'),
+          headers: <String, String>{
+            'Content-type': 'application/json; charset=UTF-8',
+            'x-auth-token': token,
+          },
+        );
+
+        var userProvider = Provider.of<UserProvider>(context, listen: false);
+
+        userProvider.setUser(userRes.body);
+      }
     } catch (e) {}
   }
 }
